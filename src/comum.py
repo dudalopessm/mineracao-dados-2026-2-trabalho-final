@@ -254,6 +254,80 @@ def salvar_resultados(resultado, algoritmo, config, com_status):
     return prefixo
 
 
+def _formatar_celula(valor, inteiros):
+    if valor is None or (isinstance(valor, float) and np.isnan(valor)):
+        return ''
+    if isinstance(valor, (float, np.floating)):
+        return f'{int(valor)}' if inteiros else f'{valor:.3f}'
+    return str(valor)
+
+
+def salvar_tabela(df, nome, largura_max_cabecalho=16):
+    """Desenha um DataFrame como tabela do matplotlib e grava `<nome>.png` em RESULTS_DIR.
+
+    Serve para levar ao relatório as tabelas exibidas nos notebooks. Índices que
+    não são o padrão (0, 1, 2...) viram colunas; colunas com vários níveis são
+    unidas por espaço. Números reais aparecem com 3 casas, ou como inteiros se a
+    coluna só tiver valores inteiros (contagens como FN e FP).
+    """
+    import textwrap
+
+    import matplotlib.pyplot as plt
+
+    t = df.copy()
+    if isinstance(t.columns, pd.MultiIndex):
+        t.columns = [' '.join(str(p) for p in c if str(p) != '').strip() for c in t.columns]
+    if t.index.nlevels == 1 and t.index.name is None and pd.api.types.is_integer_dtype(t.index):
+        t = t.reset_index(drop=True)  # índice numérico sem nome (ex.: depois de um sort) não vai para a tabela
+    if not isinstance(t.index, pd.RangeIndex):
+        nomes = [n if n is not None else '' for n in t.index.names]
+        t.index.names = [n or f'__idx{i}' for i, n in enumerate(nomes)]
+        t = t.reset_index()
+        t.columns = ['' if str(c).startswith('__idx') else c for c in t.columns]
+
+    celulas = []
+    for c in t.columns:
+        col = t[c]
+        numeros = pd.to_numeric(col, errors='coerce')
+        inteiros = (col.map(lambda v: isinstance(v, (int, float, np.integer, np.floating))).all()
+                    and numeros.dropna().map(lambda v: float(v).is_integer()).all())
+        celulas.append([_formatar_celula(v, inteiros) for v in col])
+    linhas = [list(r) for r in zip(*celulas)] if celulas else []
+    cabecalho = [textwrap.fill(str(c), largura_max_cabecalho) for c in t.columns]
+
+    # largura de cada coluna (em polegadas) pelo texto mais longo, com folga
+    pol_por_caractere = 0.085  # fonte de 9 pt
+    larg = [pol_por_caractere * max([len(s) * 1.1 for s in cabecalho[j].split('\n')]
+                                    + [len(r[j]) for r in linhas] + [3]) + 0.2
+            for j in range(len(cabecalho))]
+    n_linhas_cab = max(h.count('\n') + 1 for h in cabecalho)
+    alt_linha = 0.24
+    alt_cab = alt_linha * (0.75 * n_linhas_cab + 0.25)
+
+    fig = plt.figure(figsize=(sum(larg), alt_cab + alt_linha * len(linhas)))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.axis('off')
+    tab = ax.table(cellText=linhas, colLabels=cabecalho, colWidths=[w / sum(larg) for w in larg],
+                   cellLoc='center', bbox=[0, 0, 1, 1])
+    tab.auto_set_font_size(False)
+    tab.set_fontsize(9)
+    frac_cab = alt_cab / (alt_cab + alt_linha * len(linhas))
+    for (i, j), cel in tab.get_celld().items():
+        cel.set_edgecolor('#bbbbbb')
+        cel.set_linewidth(0.5)
+        cel.set_height(frac_cab if i == 0 else (1 - frac_cab) / max(len(linhas), 1))
+        if i == 0:
+            cel.set_facecolor('#dde3ea')
+            cel.set_text_props(weight='bold')
+        elif i % 2 == 0:
+            cel.set_facecolor('#f5f7fa')
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    caminho = RESULTS_DIR / f'{nome}.png'
+    fig.savefig(caminho, dpi=200, bbox_inches='tight', pad_inches=0.05)
+    plt.close(fig)
+    return caminho
+
+
 ALGORITMOS = ['mlp', 'nb', 'xgb', 'rl']
 
 

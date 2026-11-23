@@ -1,0 +1,2 @@
+algoritmo,config,base,tn,fp,fn,tp
+xgb,d2_lr0.3,com-status,2315,89,34,412

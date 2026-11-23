@@ -1,0 +1,2 @@
+algoritmo,config,base,tn,fp,fn,tp
+xgb,d2_lr0.3_sem-pesos,sem-status,2353,51,91,355

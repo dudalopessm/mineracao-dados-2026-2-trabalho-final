@@ -1,0 +1,2 @@
+algoritmo,config,base,tn,fp,fn,tp
+xgb,d6_lr0.1,sem-status,2340,64,52,394

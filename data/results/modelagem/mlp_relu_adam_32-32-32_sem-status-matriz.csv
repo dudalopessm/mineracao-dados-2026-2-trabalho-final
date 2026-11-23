@@ -1,0 +1,2 @@
+algoritmo,config,base,tn,fp,fn,tp
+mlp,relu_adam_32-32-32,sem-status,2299,105,38,408

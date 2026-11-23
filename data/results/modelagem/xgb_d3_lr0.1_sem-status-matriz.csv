@@ -1,0 +1,2 @@
+algoritmo,config,base,tn,fp,fn,tp
+xgb,d3_lr0.1,sem-status,2283,121,32,414

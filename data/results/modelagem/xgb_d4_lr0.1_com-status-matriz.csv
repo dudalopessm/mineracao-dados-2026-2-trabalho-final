@@ -1,0 +1,2 @@
+algoritmo,config,base,tn,fp,fn,tp
+xgb,d4_lr0.1,com-status,2334,70,42,404

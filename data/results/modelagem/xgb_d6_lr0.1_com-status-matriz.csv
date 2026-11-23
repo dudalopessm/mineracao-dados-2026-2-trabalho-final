@@ -1,0 +1,2 @@
+algoritmo,config,base,tn,fp,fn,tp
+xgb,d6_lr0.1,com-status,2347,57,47,399

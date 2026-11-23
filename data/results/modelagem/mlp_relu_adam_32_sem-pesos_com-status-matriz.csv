@@ -1,0 +1,2 @@
+algoritmo,config,base,tn,fp,fn,tp
+mlp,relu_adam_32_sem-pesos,com-status,2352,52,102,344
